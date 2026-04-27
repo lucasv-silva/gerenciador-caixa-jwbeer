@@ -1,4 +1,80 @@
-# =========================================================
+from datetime import datetime
+import os
+
+def limpar_tela():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+def calcular_total():
+    total = 0.0
+    try:
+        with open("historico_vendas.txt", "r") as arquivo:
+            for linha in arquivo:
+                # O código busca o valor depois do "R$ " e soma
+                if "R$ " in linha:
+                    valor_str = linha.split("R$ ")[1].strip()
+                    total += float(valor_str)
+        return total
+    except FileNotFoundError:
+        return 0.0
+
+def menu():
+    while True:
+        limpar_tela()
+        print("="*35)
+        print("    SISTEMA JW BEER - v2.5")
+        print("="*35)
+        print("1. Registrar Venda")
+        print("2. Ver Histórico (Detalhado)")
+        print("3. Ver Valor Total no Caixa")
+        print("4. Sair")
+        print("="*35)
+        
+        opcao = input("Escolha uma opção: ")
+
+        if opcao == "1":
+            try:
+                valor = float(input("\nDigite o valor da venda: R$ "))
+                agora = datetime.now()
+                data_formatada = agora.strftime("%d/%m/%Y %H:%M:%S")
+                
+                registro = f"[{data_formatada}] Venda: R$ {valor:.2f}\n"
+                
+                with open("historico_vendas.txt", "a") as arquivo:
+                    arquivo.write(registro)
+                
+                print(f"\n✅ R$ {valor:.2f} registrado com sucesso!")
+                input("\n[Enter] para voltar...")
+            except ValueError:
+                print("\n❌ Use apenas números e ponto (ex: 10.50)")
+                input("\n[Enter] para tentar novamente...")
+
+        elif opcao == "2":
+            print("\n--- HISTÓRICO DE VENDAS ---")
+            try:
+                with open("historico_vendas.txt", "r") as arquivo:
+                    print(arquivo.read())
+            except FileNotFoundError:
+                print("Nenhuma venda no sistema.")
+            input("\n[Enter] para voltar...")
+
+        elif opcao == "3":
+            total_caixa = calcular_total()
+            print("\n" + "="*25)
+            print(f"💰 TOTAL EM CAIXA: R$ {total_caixa:.2f}")
+            print("="*25)
+            input("\n[Enter] para voltar...")
+
+        elif opcao == "4":
+            total_final = calcular_total()
+            print(f"\nFechando caixa... Total final: R$ {total_final:.2f}")
+            print("Bom trabalho, Lucas!")
+            break
+        else:
+            print("\nOpção inválida!")
+            input("\n[Enter] para tentar novamente...")
+
+if __name__ == "__main__":
+    menu()# =========================================================
 # PROJETO: Controle de Caixa - JW Beer
 # DESENVOLVEDOR: Lucas Vinicius da Silva
 # OBJETIVO: Gerenciar entradas e saídas da minha adega
