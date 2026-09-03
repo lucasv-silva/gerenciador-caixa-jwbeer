@@ -165,8 +165,8 @@ def loja():
 
                 <div class="box-entrega">
                     <label style="font-size: 14px; font-weight: bold; color: #f39c12;">Seus Dados:</label>
-                    <input type="text" name="nome" class="input-field" placeholder="Seu Nome completo" required>
-                    <input type="text" name="endereco" class="input-field" placeholder="Endereço / Ponto de Referência" required>
+                    <input type="text" name="nome" id="inputNome" class="input-field" placeholder="Seu Nome completo" required>
+                    <input type="text" name="endereco" id="inputEndereco" class="input-field" placeholder="Endereço / Ponto de Referência" required>
                     
                     <label style="font-size: 14px; font-weight: bold; color: #f39c12;">Forma de Pagamento:</label>
                     <select name="pagamento" id="selectPagamento" class="input-field" onchange="verificarPix()" required>
@@ -272,11 +272,11 @@ def loja():
                     return;
                 }
 
-                let nome = document.querySelector('input[name="nome"]').value;
-                let endereco = document.querySelector('input[name="endereco"]').value;
+                let nome = document.getElementById('inputNome').value.trim();
+                let endereco = document.getElementById('inputEndereco').value.trim();
 
                 if (!nome || !endereco) {
-                    alert("Por favor, preencha Nome e Endereço!");
+                    alert("Por favor, preencha Nome e Endereço nos campos indicados!");
                     return;
                 }
 
@@ -298,9 +298,9 @@ def loja():
             }
 
             function processarEEnviar(linkMaps) {
-                let nome = document.querySelector('input[name="nome"]').value;
-                let endereco = document.querySelector('input[name="endereco"]').value;
-                let pagamento = document.querySelector('select[name="pagamento"]').value;
+                let nome = document.getElementById('inputNome').value;
+                let endereco = document.getElementById('inputEndereco').value;
+                let pagamento = document.getElementById('selectPagamento').value;
 
                 let resumoTexto = "";
                 let itensValidos = {};
