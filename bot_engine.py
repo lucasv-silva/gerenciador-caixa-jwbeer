@@ -1,7 +1,8 @@
 import sqlite3
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+fuso_br = timezone(timedelta(hours=-3))
 
 # Tenta importar a OpenAI se a chave/biblioteca estiver configurada
 try:
@@ -159,7 +160,7 @@ def processar_pedido_whatsapp(texto_cliente=None, caminho_audio=None, nome_whats
         dados["nome_cliente"] = nome_whatsapp
 
     # 4. Inserir no Banco de Dados SQLite do App
-    data_hora = datetime.now().strftime("%d/%m/%Y %H:%M")
+    data_hora = datetime.now(fuso_br).strftime('%d/%m/%Y %H:%M')
     cursor.execute("""
         INSERT INTO pedidos (data_hora, nome_cliente, cliente_endereco, itens, total, valor_pago, troco, status)
         VALUES (?, ?, ?, ?, ?, ?, ?, 'Pendente')
