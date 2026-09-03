@@ -94,7 +94,6 @@ def loja():
             .container { padding: 15px; max-width: 600px; margin: 0 auto; }
             .categoria-titulo { color: #f39c12; margin: 25px 0 12px 0; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
             
-            /* Card do Produto */
             .produto-card { background: #1e1e1e; padding: 12px; border-radius: 10px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; border: 1px solid #2a2a2a; }
             .prod-img { width: 65px; height: 65px; border-radius: 8px; object-fit: cover; background: #2a2a2a; flex-shrink: 0; }
             .prod-info { flex: 1; }
@@ -106,15 +105,12 @@ def loja():
             .btn-qtd:active { background: #f39c12; color: #121212; }
             .qtd-num { font-size: 16px; font-weight: bold; min-width: 20px; text-align: center; }
             
-            /* Botão de Adicionar Novo Item */
             .btn-add-novo { width: 100%; background: #f39c12; color: #121212; border: none; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 15px; margin-top: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
             .box-cadastrar { background: #1e1e1e; padding: 15px; border-radius: 10px; border: 1px solid #f39c12; margin-top: 15px; display: none; }
             
-            /* Form Entrega & Inputs */
             .box-entrega { background: #1e1e1e; padding: 15px; border-radius: 10px; margin-top: 25px; border: 1px solid #333; }
             .input-field { width: 100%; padding: 10px; margin-top: 6px; margin-bottom: 12px; border-radius: 6px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 14px; }
             
-            /* Rodapé Fixo */
             .bar-carrinho { position: fixed; bottom: 0; left: 0; right: 0; background: #1e1e1e; padding: 12px 20px; border-top: 2px solid #27ae60; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -4px 10px rgba(0,0,0,0.5); z-index: 99; }
             .total-texto { font-size: 13px; color: #aaa; }
             .total-valor { font-size: 20px; color: #27ae60; font-weight: bold; }
