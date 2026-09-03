@@ -28,20 +28,22 @@ def inicializar_banco():
             )
         ''')
         
-        # Tabela de Produtos do Catálogo
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS produtos (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                categoria TEXT,
-                nome TEXT,
-                preco REAL,
-                foto TEXT
-            )
-        ''')
+        # Verifica se a tabela 'produtos' tem a coluna 'categoria' para evitar erros de migração
+        cursor.execute("PRAGMA table_info(produtos)")
+        colunas = [coluna[1] for coluna in cursor.fetchall()]
         
-        # Inserir produtos padrão caso a tabela esteja vazia
-        cursor.execute("SELECT COUNT(*) FROM produtos")
-        if cursor.fetchone()[0] == 0:
+        if 'categoria' not in colunas:
+            cursor.execute("DROP TABLE IF EXISTS produtos")
+            cursor.execute('''
+                CREATE TABLE produtos (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    categoria TEXT,
+                    nome TEXT,
+                    preco REAL,
+                    foto TEXT
+                )
+            ''')
+            
             produtos_iniciais = [
                 ("🍺 Cervejas", "Caixa Heineken Long Neck", 50.00, "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=150"),
                 ("🍺 Cervejas", "Fardo Skol Pilsen Lata", 38.00, "https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=150"),
