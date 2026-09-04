@@ -25,9 +25,10 @@ def inicializar_banco():
             )
         ''')
         
-        # Tabela de Produtos
+        # Força a recriação da tabela produtos para garantir que todas as colunas existam
+        cursor.execute('DROP TABLE IF EXISTS produtos')
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS produtos (
+            CREATE TABLE produtos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 categoria TEXT,
                 nome TEXT,
@@ -36,18 +37,15 @@ def inicializar_banco():
             )
         ''')
         
-        # Garante que sempre haverá produtos iniciais se a tabela estiver vazia
-        cursor.execute("SELECT COUNT(*) FROM produtos")
-        if cursor.fetchone()[0] == 0:
-            produtos_iniciais = [
-                ("🍺 Cervejas", "Caixa Heineken Long Neck", 50.00, "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=150"),
-                ("🍺 Cervejas", "Fardo Skol Pilsen Lata", 38.00, "https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=150"),
-                ("🥃 Destilados & Cachaças", "Cachaça 51 (965ml)", 18.50, "https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=150"),
-                ("🥤 Refrigerantes & Sem Álcool", "Guaraná Iara 2L", 7.50, "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=150")
-            ]
-            cursor.executemany("INSERT INTO produtos (categoria, nome, preco, foto) VALUES (?, ?, ?, ?)", produtos_iniciais)
-            conn.commit()
-            
+        # Insere os produtos iniciais limpos
+        produtos_iniciais = [
+            ("🍺 Cervejas", "Caixa Heineken Long Neck", 50.00, "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=150"),
+            ("🍺 Cervejas", "Fardo Skol Pilsen Lata", 38.00, "https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=150"),
+            ("🥃 Destilados & Cachaças", "Cachaça 51 (965ml)", 18.50, "https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=150"),
+            ("🥤 Refrigerantes & Sem Álcool", "Guaraná Iara 2L", 7.50, "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=150")
+        ]
+        cursor.executemany("INSERT INTO produtos (categoria, nome, preco, foto) VALUES (?, ?, ?, ?)", produtos_iniciais)
+        conn.commit()
         conn.close()
     except Exception as e:
         print("Erro crítico na inicialização do banco:", e)
