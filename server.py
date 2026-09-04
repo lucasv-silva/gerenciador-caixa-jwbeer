@@ -1,12 +1,9 @@
 import sqlite3
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from flask import Flask, request, render_template_string, redirect, url_for
 
 app = Flask(__name__)
-
-# Fuso horário de Brasília (UTC-3)
-fuso_br = timezone(timedelta(hours=-3))
 
 def inicializar_banco():
     conn = sqlite3.connect('caixa_jwbeer.db')
@@ -285,7 +282,7 @@ def loja():
                 document.getElementById('total_final').value = totalGeral;
                 document.getElementById('localizacao_maps').value = linkMaps;
 
-                let foneSeuWhatsApp = "5584921662194
+                let foneSeuWhatsApp = "5584921662194";
 
                 let msgWhats = "🍺 *NOVO PEDIDO - JW BEER*%0A%0A" +
                                "👤 *Cliente:* " + encodeURIComponent(nome) + "%0A" +
@@ -334,7 +331,7 @@ def fazer_pedido():
         pagamento = request.form.get("pagamento")
         itens_json = request.form.get("itens_json")
         total = float(request.form.get("total_final") or 0.0)
-        data_hora = datetime.now(fuso_br).strftime('%d/%m/%Y %H:%M')
+        data_hora = datetime.now().strftime('%d/%m/%Y %H:%M')
 
         conn = sqlite3.connect('caixa_jwbeer.db')
         cursor = conn.cursor()
