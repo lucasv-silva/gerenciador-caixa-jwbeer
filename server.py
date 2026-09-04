@@ -6,68 +6,74 @@ from flask import Flask, request, render_template_string, redirect, url_for
 app = Flask(__name__)
 
 def inicializar_banco():
-    conn = sqlite3.connect('caixa_jwbeer.db')
-    cursor = conn.cursor()
-    
-    # Tabela de Vendas / Pedidos
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS vendas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            data_hora TEXT,
-            nome_cliente TEXT,
-            cliente_endereco TEXT,
-            localizacao_maps TEXT,
-            itens TEXT,
-            valor_total REAL,
-            forma_pagamento TEXT,
-            status TEXT
-        )
-    ''')
-    
-    # Tabela de Produtos
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS produtos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            categoria TEXT,
-            nome TEXT,
-            preco REAL,
-            foto TEXT
-        )
-    ''')
-    
-    # Garante que sempre haverá produtos iniciais se a tabela estiver vazia
-    cursor.execute("SELECT COUNT(*) FROM produtos")
-    if cursor.fetchone()[0] == 0:
-        produtos_iniciais = [
-            ("🍺 Cervejas", "Caixa Heineken Long Neck", 50.00, "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=150"),
-            ("🍺 Cervejas", "Fardo Skol Pilsen Lata", 38.00, "https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=150"),
-            ("🥃 Destilados & Cachaças", "Cachaça 51 (965ml)", 18.50, "https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=150"),
-            ("🥤 Refrigerantes & Sem Álcool", "Guaraná Iara 2L", 7.50, "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=150")
-        ]
-        cursor.executemany("INSERT INTO produtos (categoria, nome, preco, foto) VALUES (?, ?, ?, ?)", produtos_iniciais)
-        conn.commit()
+    try:
+        conn = sqlite3.connect('caixa_jwbeer.db')
+        cursor = conn.cursor()
         
-    conn.close()
+        # Tabela de Vendas / Pedidos
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS vendas (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                data_hora TEXT,
+                nome_cliente TEXT,
+                cliente_endereco TEXT,
+                localizacao_maps TEXT,
+                itens TEXT,
+                valor_total REAL,
+                forma_pagamento TEXT,
+                status TEXT
+            )
+        ''')
+        
+        # Tabela de Produtos
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS produtos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                categoria TEXT,
+                nome TEXT,
+                preco REAL,
+                foto TEXT
+            )
+        ''')
+        
+        # Garante que sempre haverá produtos iniciais se a tabela estiver vazia
+        cursor.execute("SELECT COUNT(*) FROM produtos")
+        if cursor.fetchone()[0] == 0:
+            produtos_iniciais = [
+                ("🍺 Cervejas", "Caixa Heineken Long Neck", 50.00, "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=150"),
+                ("🍺 Cervejas", "Fardo Skol Pilsen Lata", 38.00, "https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=150"),
+                ("🥃 Destilados & Cachaças", "Cachaça 51 (965ml)", 18.50, "https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=150"),
+                ("🥤 Refrigerantes & Sem Álcool", "Guaraná Iara 2L", 7.50, "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=150")
+            ]
+            cursor.executemany("INSERT INTO produtos (categoria, nome, preco, foto) VALUES (?, ?, ?, ?)", produtos_iniciais)
+            conn.commit()
+            
+        conn.close()
+    except Exception as e:
+        print("Erro crítico na inicialização do banco:", e)
 
 # Inicializa o banco assim que o app arranca
 inicializar_banco()
 
 @app.route("/", methods=["GET"])
 def loja():
-    conn = sqlite3.connect('caixa_jwbeer.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, categoria, nome, preco, foto FROM produtos ORDER BY categoria, id")
-    produtos_db = cursor.fetchall()
-    conn.close()
+    try:
+        conn = sqlite3.connect('caixa_jwbeer.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, categoria, nome, preco, foto FROM produtos ORDER BY categoria, id")
+        produtos_db = cursor.fetchall()
+        conn.close()
 
-    catalogo_dict = {}
-    for p in produtos_db:
-        cat = p[1]
-        if cat not in catalogo_dict:
-            catalogo_dict[cat] = []
-        catalogo_dict[cat].append({"id": p[0], "nome": p[2], "preco": p[3], "foto": p[4]})
+        catalogo_dict = {}
+        for p in produtos_db:
+            cat = p[1]
+            if cat not in catalogo_dict:
+                catalogo_dict[cat] = []
+            catalogo_dict[cat].append({"id": p[0], "nome": p[2], "preco": p[3], "foto": p[4]})
 
-    catalogo_json = json.dumps(catalogo_dict)
+        catalogo_json = json.dumps(catalogo_dict)
+    except Exception as e:
+        return f"<h1 style='color: red;'>Erro interno ao carregar produtos:</h1><pre>{str(e)}</pre>"
 
     html_loja = '''
     <!DOCTYPE html>
