@@ -315,7 +315,7 @@ def loja():
                 document.getElementById('total_final').value = totalGeral;
                 document.getElementById('localizacao_maps').value = linkMaps;
 
-                let foneSeuWhatsApp = "5584999999999"; 
+                let foneSeuWhatsApp = "5584921662194
 
                 let msgWhats = "🍺 *NOVO PEDIDO - JW BEER*%0A%0A" +
                                "👤 *Cliente:* " + encodeURIComponent(nome) + "%0A" +
