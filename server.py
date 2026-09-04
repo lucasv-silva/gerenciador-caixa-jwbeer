@@ -1,4 +1,4 @@
-import sqlite3
+ import sqlite3
 import json
 from datetime import datetime, timedelta, timezone
 from flask import Flask, request, render_template_string, redirect, url_for
@@ -28,22 +28,22 @@ def inicializar_banco():
             )
         ''')
         
-        # Verifica se a tabela 'produtos' tem a coluna 'categoria' para evitar erros de migração
-        cursor.execute("PRAGMA table_info(produtos)")
-        colunas = [coluna[1] for coluna in cursor.fetchall()]
+        # Tabela de Produtos com verificação robusta
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS produtos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                categoria TEXT,
+                nome TEXT,
+                preco REAL,
+                foto TEXT
+            )
+        ''')
         
-        if 'categoria' not in colunas:
-            cursor.execute("DROP TABLE IF EXISTS produtos")
-            cursor.execute('''
-                CREATE TABLE produtos (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    categoria TEXT,
-                    nome TEXT,
-                    preco REAL,
-                    foto TEXT
-                )
-            ''')
-            
+        # Se a tabela de produtos estiver vazia, insere os produtos padrão
+        cursor.execute("SELECT COUNT(*) FROM produtos")
+        total_produtos = cursor.fetchone()[0]
+        
+        if total_produtos == 0:
             produtos_iniciais = [
                 ("🍺 Cervejas", "Caixa Heineken Long Neck", 50.00, "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=150"),
                 ("🍺 Cervejas", "Fardo Skol Pilsen Lata", 38.00, "https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=150"),
@@ -161,6 +161,7 @@ def loja():
                 <input type="hidden" name="total_final" id="total_final">
                 <input type="hidden" name="localizacao_maps" id="localizacao_maps">
 
+                <!-- LISTA DE PRODUTOS RENDERIZADA DINAMICAMENTE -->
                 <div id="lista-produtos"></div>
 
                 <div class="box-entrega">
@@ -268,7 +269,7 @@ def loja():
                 }
 
                 if (!temItem) {
-                    alert("Selecione pelo menos um item!");
+                    alert("Selecione pelo menos um item no cardápio antes de enviar!");
                     return;
                 }
 
@@ -276,7 +277,7 @@ def loja():
                 let endereco = document.getElementById('inputEndereco').value.trim();
 
                 if (!nome || !endereco) {
-                    alert("Por favor, preencha Nome e Endereço nos campos indicados!");
+                    alert("Por favor, preencha os campos Nome e Endereço nos dados de entrega!");
                     return;
                 }
 
