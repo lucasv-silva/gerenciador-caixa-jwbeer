@@ -1,4 +1,4 @@
- import sqlite3
+import sqlite3
 import json
 from datetime import datetime, timedelta, timezone
 from flask import Flask, request, render_template_string, redirect, url_for
@@ -9,59 +9,52 @@ app = Flask(__name__)
 fuso_br = timezone(timedelta(hours=-3))
 
 def inicializar_banco():
-    try:
-        conn = sqlite3.connect('caixa_jwbeer.db')
-        cursor = conn.cursor()
-        
-        # Tabela de Vendas / Pedidos
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS vendas (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                data_hora TEXT,
-                nome_cliente TEXT,
-                cliente_endereco TEXT,
-                localizacao_maps TEXT,
-                itens TEXT,
-                valor_total REAL,
-                forma_pagamento TEXT,
-                status TEXT
-            )
-        ''')
-        
-        # Tabela de Produtos com verificação robusta
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS produtos (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                categoria TEXT,
-                nome TEXT,
-                preco REAL,
-                foto TEXT
-            )
-        ''')
-        
-        # Se a tabela de produtos estiver vazia, insere os produtos padrão
-        cursor.execute("SELECT COUNT(*) FROM produtos")
-        total_produtos = cursor.fetchone()[0]
-        
-        if total_produtos == 0:
-            produtos_iniciais = [
-                ("🍺 Cervejas", "Caixa Heineken Long Neck", 50.00, "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=150"),
-                ("🍺 Cervejas", "Fardo Skol Pilsen Lata", 38.00, "https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=150"),
-                ("🥃 Destilados & Cachaças", "Cachaça 51 (965ml)", 18.50, "https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=150"),
-                ("🥤 Refrigerantes & Sem Álcool", "Guaraná Iara 2L", 7.50, "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=150")
-            ]
-            cursor.executemany("INSERT INTO produtos (categoria, nome, preco, foto) VALUES (?, ?, ?, ?)", produtos_iniciais)
-            
+    conn = sqlite3.connect('caixa_jwbeer.db')
+    cursor = conn.cursor()
+    
+    # Tabela de Vendas / Pedidos
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS vendas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            data_hora TEXT,
+            nome_cliente TEXT,
+            cliente_endereco TEXT,
+            localizacao_maps TEXT,
+            itens TEXT,
+            valor_total REAL,
+            forma_pagamento TEXT,
+            status TEXT
+        )
+    ''')
+    
+    # Tabela de Produtos
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS produtos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            categoria TEXT,
+            nome TEXT,
+            preco REAL,
+            foto TEXT
+        )
+    ''')
+    
+    # Garante que sempre haverá produtos iniciais se a tabela estiver vazia
+    cursor.execute("SELECT COUNT(*) FROM produtos")
+    if cursor.fetchone()[0] == 0:
+        produtos_iniciais = [
+            ("🍺 Cervejas", "Caixa Heineken Long Neck", 50.00, "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=150"),
+            ("🍺 Cervejas", "Fardo Skol Pilsen Lata", 38.00, "https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=150"),
+            ("🥃 Destilados & Cachaças", "Cachaça 51 (965ml)", 18.50, "https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=150"),
+            ("🥤 Refrigerantes & Sem Álcool", "Guaraná Iara 2L", 7.50, "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=150")
+        ]
+        cursor.executemany("INSERT INTO produtos (categoria, nome, preco, foto) VALUES (?, ?, ?, ?)", produtos_iniciais)
         conn.commit()
-        conn.close()
-    except Exception as e:
-        print("Erro ao inicializar banco:", e)
+        
+    conn.close()
 
+# Inicializa o banco assim que o app arranca
 inicializar_banco()
 
-# ----------------------------------------------------
-# 1. ROTA PÚBLICA: CARDÁPIO DIGITAL DINÂMICO (/)
-# ----------------------------------------------------
 @app.route("/", methods=["GET"])
 def loja():
     conn = sqlite3.connect('caixa_jwbeer.db')
@@ -92,28 +85,22 @@ def loja():
             header { background: #1e1e1e; padding: 15px; text-align: center; border-bottom: 2px solid #f39c12; position: sticky; top: 0; z-index: 100; }
             h1 { color: #f39c12; font-size: 22px; }
             p.sub { color: #aaa; font-size: 13px; }
-            
             .container { padding: 15px; max-width: 600px; margin: 0 auto; }
-            .categoria-titulo { color: #f39c12; margin: 25px 0 12px 0; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
-            
+            .categoria-titulo { color: #f39c12; margin: 25px 0 12px 0; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 5px; text-transform: uppercase; }
             .produto-card { background: #1e1e1e; padding: 12px; border-radius: 10px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; border: 1px solid #2a2a2a; }
             .prod-img { width: 65px; height: 65px; border-radius: 8px; object-fit: cover; background: #2a2a2a; flex-shrink: 0; }
             .prod-info { flex: 1; }
             .prod-nome { font-weight: bold; font-size: 15px; color: #fff; }
             .prod-preco { color: #27ae60; font-size: 14px; margin-top: 4px; font-weight: bold; }
-            
             .qtd-controls { display: flex; align-items: center; gap: 8px; }
             .btn-qtd { background: #2a2a2a; color: #f39c12; border: 1px solid #f39c12; width: 32px; height: 32px; border-radius: 6px; font-weight: bold; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
             .btn-qtd:active { background: #f39c12; color: #121212; }
             .qtd-num { font-size: 16px; font-weight: bold; min-width: 20px; text-align: center; }
-            
-            .btn-add-novo { width: 100%; background: #f39c12; color: #121212; border: none; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 15px; margin-top: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+            .btn-add-novo { width: 100%; background: #f39c12; color: #121212; border: none; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 15px; margin-top: 15px; cursor: pointer; }
             .box-cadastrar { background: #1e1e1e; padding: 15px; border-radius: 10px; border: 1px solid #f39c12; margin-top: 15px; display: none; }
-            
             .box-entrega { background: #1e1e1e; padding: 15px; border-radius: 10px; margin-top: 25px; border: 1px solid #333; }
             .input-field { width: 100%; padding: 10px; margin-top: 6px; margin-bottom: 12px; border-radius: 6px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 14px; }
-            
-            .bar-carrinho { position: fixed; bottom: 0; left: 0; right: 0; background: #1e1e1e; padding: 12px 20px; border-top: 2px solid #27ae60; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -4px 10px rgba(0,0,0,0.5); z-index: 99; }
+            .bar-carrinho { position: fixed; bottom: 0; left: 0; right: 0; background: #1e1e1e; padding: 12px 20px; border-top: 2px solid #27ae60; display: flex; justify-content: space-between; align-items: center; z-index: 99; }
             .total-texto { font-size: 13px; color: #aaa; }
             .total-valor { font-size: 20px; color: #27ae60; font-weight: bold; }
             .btn-enviar { background: #27ae60; color: #fff; border: none; padding: 12px 18px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; }
@@ -126,9 +113,7 @@ def loja():
         </header>
 
         <div class="container">
-            <button type="button" class="btn-add-novo" onclick="toggleFormCadastro()">
-                ➕ Adicionar Novo Produto ao Catálogo
-            </button>
+            <button type="button" class="btn-add-novo" onclick="toggleFormCadastro()">➕ Adicionar Novo Produto ao Catálogo</button>
 
             <div id="boxCadastrar" class="box-cadastrar">
                 <h3 style="color: #f39c12; margin-bottom: 10px; font-size: 16px;">Cadastrar Novo Item</h3>
@@ -140,19 +125,13 @@ def loja():
                         <option value="🥤 Refrigerantes & Sem Álcool">🥤 Refrigerantes & Sem Álcool</option>
                         <option value="🍿 Petiscos & Outros">🍿 Petiscos & Outros</option>
                     </select>
-
                     <label style="font-size: 12px; color: #aaa;">Nome do Produto:</label>
                     <input type="text" name="nome" class="input-field" placeholder="Ex: Heineken 600ml" required>
-
                     <label style="font-size: 12px; color: #aaa;">Preço (R$):</label>
                     <input type="number" step="0.01" name="preco" class="input-field" placeholder="Ex: 12.50" required>
-
                     <label style="font-size: 12px; color: #aaa;">Link/URL da Foto:</label>
                     <input type="url" name="foto" class="input-field" placeholder="https://site.com/foto.jpg" required>
-
-                    <button type="submit" style="width: 100%; background: #27ae60; color: #fff; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px;">
-                        Salvar Produto
-                    </button>
+                    <button type="submit" style="width: 100%; background: #27ae60; color: #fff; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px;">Salvar Produto</button>
                 </form>
             </div>
 
@@ -161,7 +140,6 @@ def loja():
                 <input type="hidden" name="total_final" id="total_final">
                 <input type="hidden" name="localizacao_maps" id="localizacao_maps">
 
-                <!-- LISTA DE PRODUTOS RENDERIZADA DINAMICAMENTE -->
                 <div id="lista-produtos"></div>
 
                 <div class="box-entrega">
@@ -179,9 +157,7 @@ def loja():
                     <div id="boxPix" style="background: #2a2a2a; padding: 12px; border-radius: 8px; border: 1px solid #f39c12; margin-bottom: 12px; text-align: center;">
                         <div style="font-size: 12px; color: #aaa;">Chave Pix do Estabelecimento:</div>
                         <div id="chavePixTexto" style="font-weight: bold; color: #27ae60; margin: 6px 0; font-size: 15px;">suachavepix@email.com</div>
-                        <button type="button" onclick="copiarPix()" style="background: #f39c12; color: #121212; border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px;">
-                            📋 Copiar Chave Pix
-                        </button>
+                        <button type="button" onclick="copiarPix()" style="background: #f39c12; color: #121212; border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px;">📋 Copiar Chave Pix</button>
                     </div>
                 </div>
             </form>
@@ -224,7 +200,6 @@ def loja():
                         `;
                     });
                 }
-
                 container.innerHTML = html;
             }
 
@@ -235,13 +210,11 @@ def loja():
 
             function verificarPix() {
                 let pag = document.getElementById('selectPagamento').value;
-                let box = document.getElementById('boxPix');
-                box.style.display = (pag === 'Pix') ? 'block' : 'none';
+                document.getElementById('boxPix').style.display = (pag === 'Pix') ? 'block' : 'none';
             }
 
             function copiarPix() {
-                let chave = document.getElementById('chavePixTexto').innerText;
-                navigator.clipboard.writeText(chave);
+                navigator.clipboard.writeText(document.getElementById('chavePixTexto').innerText);
                 alert("Chave Pix copiada!");
             }
 
@@ -277,21 +250,17 @@ def loja():
                 let endereco = document.getElementById('inputEndereco').value.trim();
 
                 if (!nome || !endereco) {
-                    alert("Por favor, preencha os campos Nome e Endereço nos dados de entrega!");
+                    alert("Por favor, preencha os campos Nome e Endereço!");
                     return;
                 }
 
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
                         (position) => {
-                            let lat = position.coords.latitude;
-                            let lon = position.coords.longitude;
-                            let linkMaps = "https://maps.google.com/?q=" + lat + "," + lon;
+                            let linkMaps = "https://maps.google.com/?q=" + position.coords.latitude + "," + position.coords.longitude;
                             processarEEnviar(linkMaps);
                         },
-                        (error) => {
-                            processarEEnviar("Endereço sem GPS");
-                        }
+                        (error) => { processarEEnviar("Endereço sem GPS"); }
                     );
                 } else {
                     processarEEnviar("Sem suporte a GPS");
@@ -337,9 +306,6 @@ def loja():
     '''
     return render_template_string(html_loja, catalogo_json=catalogo_json)
 
-# ----------------------------------------------------
-# 2. ROTA PARA ADICIONAR NOVO PRODUTO (/adicionar_produto)
-# ----------------------------------------------------
 @app.route("/adicionar_produto", methods=["POST"])
 def adicionar_produto():
     try:
@@ -356,13 +322,9 @@ def adicionar_produto():
             conn.commit()
             conn.close()
     except Exception as e:
-        print("Erro ao cadastrar produto:", e)
-
+        print("Erro ao cadastrar:", e)
     return redirect(url_for('loja'))
 
-# ----------------------------------------------------
-# 3. PROCESSAMENTO DO PEDIDO (/fazer_pedido)
-# ----------------------------------------------------
 @app.route("/fazer_pedido", methods=["POST"])
 def fazer_pedido():
     try:
@@ -372,7 +334,6 @@ def fazer_pedido():
         pagamento = request.form.get("pagamento")
         itens_json = request.form.get("itens_json")
         total = float(request.form.get("total_final") or 0.0)
-
         data_hora = datetime.now(fuso_br).strftime('%d/%m/%Y %H:%M')
 
         conn = sqlite3.connect('caixa_jwbeer.db')
@@ -383,15 +344,10 @@ def fazer_pedido():
         ''', (data_hora, nome, endereco, localizacao_maps, itens_json, total, pagamento))
         conn.commit()
         conn.close()
-
     except Exception as e:
         print("Erro ao gravar venda:", e)
-
     return redirect(url_for('loja'))
 
-# ----------------------------------------------------
-# 4. PAINEL DE CONTROLE DA LOJA (/painel)
-# ----------------------------------------------------
 @app.route("/painel", methods=["GET"])
 def painel():
     try:
@@ -399,12 +355,10 @@ def painel():
         cursor = conn.cursor()
         cursor.execute("SELECT id, data_hora, nome_cliente, cliente_endereco, localizacao_maps, itens, valor_total, forma_pagamento, status FROM vendas ORDER BY id DESC LIMIT 20")
         registros = cursor.fetchall()
-        
         cursor.execute("SELECT SUM(valor_total) FROM vendas")
         total_faturado = cursor.fetchone()[0] or 0.0
         conn.close()
-    except Exception as e:
-        print("Erro no painel:", e)
+    except:
         registros, total_faturado = [], 0.0
 
     html_painel = '''
@@ -412,7 +366,6 @@ def painel():
     <html lang="pt-br">
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>JW BEER - Painel</title>
         <meta http-equiv="refresh" content="5">
         <style>
@@ -420,12 +373,10 @@ def painel():
             body { background: #121212; color: #fff; padding: 15px; }
             h1 { color: #f39c12; text-align: center; font-size: 22px; }
             .status { text-align: center; color: #27ae60; font-size: 13px; margin: 5px 0 15px 0; }
-            
             .summary { display: flex; gap: 10px; margin-bottom: 20px; }
             .box { flex: 1; background: #1e1e1e; padding: 12px; border-radius: 8px; border: 1px solid #333; text-align: center; }
             .box-title { font-size: 11px; color: #aaa; text-transform: uppercase; }
             .box-value { font-size: 18px; font-weight: bold; color: #27ae60; margin-top: 4px; }
-            
             .card { background: #1e1e1e; padding: 15px; margin-bottom: 12px; border-radius: 10px; border-left: 5px solid #f39c12; }
             .card-top { display: flex; justify-content: space-between; border-bottom: 1px solid #2a2a2a; padding-bottom: 8px; margin-bottom: 8px; }
             .cliente { font-weight: bold; color: #f39c12; font-size: 15px; }
@@ -438,29 +389,16 @@ def painel():
     <body>
         <h1>🍺 JW BEER - Painel de Controle</h1>
         <div class="status">🟢 Servidor On-line | Atualização em tempo real</div>
-
         <div class="summary">
-            <div class="box">
-                <div class="box-title">Pedidos</div>
-                <div class="box-value">{{ registros|length }}</div>
-            </div>
-            <div class="box">
-                <div class="box-title">Faturamento</div>
-                <div class="box-value">R$ {{ "%.2f"|format(total_faturado) }}</div>
-            </div>
+            <div class="box"><div class="box-title">Pedidos</div><div class="box-value">{{ registros|length }}</div></div>
+            <div class="box"><div class="box-title">Faturamento</div><div class="box-value">R$ {{ "%.2f"|format(total_faturado) }}</div></div>
         </div>
-
         <div>
             {% for item in registros %}
                 <div class="card">
-                    <div class="card-top">
-                        <span class="cliente">👤 {{ item[2] }}</span>
-                        <span class="hora">🕒 {{ item[1] }}</span>
-                    </div>
+                    <div class="card-top"><span class="cliente">👤 {{ item[2] }}</span><span class="hora">🕒 {{ item[1] }}</span></div>
                     <div class="info">📍 <strong>Endereço:</strong> {{ item[3] }}</div>
-                    {% if 'http' in item[4] %}
-                        <div class="info">🗺️ <strong>GPS:</strong> <a href="{{ item[4] }}" target="_blank" class="link-maps">Abrir no Google Maps ↗</a></div>
-                    {% endif %}
+                    {% if 'http' in item[4] %}<div class="info">🗺️ <strong>GPS:</strong> <a href="{{ item[4] }}" target="_blank" class="link-maps">Abrir no Google Maps ↗</a></div>{% endif %}
                     <div class="info">💳 <strong>Pagamento:</strong> {{ item[7] }}</div>
                     <div class="info">📦 <strong>Itens:</strong> {{ item[5] }}</div>
                     <div class="total">R$ {{ "%.2f"|format(item[6]) }}</div>
